@@ -54,6 +54,28 @@ function Install-AgentToastFiles {
 
 Install-AgentToastFiles -InstallDir $InstallDir -RepositoryRawBase $RepositoryRawBase
 
+function Register-CliFocusProtocol {
+    param([string]$InstallDir)
+
+    $clifocusScript = Join-Path $InstallDir "clifocus.ps1"
+    $protocolKey = "HKCU:\Software\Classes\clifocus"
+    $commandKey = Join-Path $protocolKey "shell\open\command"
+    $command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$clifocusScript`" `"%1`""
+
+    $protocolRegistryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Software\Classes\clifocus")
+    $commandRegistryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Software\Classes\clifocus\shell\open\command")
+    try {
+        $protocolRegistryKey.SetValue("", "URL:Agent Toast focus protocol")
+        $protocolRegistryKey.SetValue("URL Protocol", "")
+        $commandRegistryKey.SetValue("", $command)
+    } finally {
+        $commandRegistryKey.Dispose()
+        $protocolRegistryKey.Dispose()
+    }
+}
+
+Register-CliFocusProtocol -InstallDir $InstallDir
+
 if (Test-Path -LiteralPath $hooksPath) {
     Copy-Item -Force $hooksPath $backupPath
     $hooks = Get-Content -LiteralPath $hooksPath -Raw -Encoding UTF8 | ConvertFrom-Json

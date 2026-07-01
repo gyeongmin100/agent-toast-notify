@@ -44,6 +44,25 @@ function Test-AgentToastReference {
     return $content -match "(codex-notify|claude-notify)\.ps1"
 }
 
+function Unregister-CliFocusProtocolIfUnused {
+    param(
+        [string]$HooksPath,
+        [string]$SettingsPath
+    )
+
+    $codexStillUsesAgentToast = Test-AgentToastReference -Path $HooksPath
+    $claudeStillUsesAgentToast = Test-AgentToastReference -Path $SettingsPath
+    $protocolKey = "HKCU:\Software\Classes\clifocus"
+    $commandKey = Join-Path $protocolKey "shell\open\command"
+
+    if (-not $codexStillUsesAgentToast -and -not $claudeStillUsesAgentToast -and (Test-Path -LiteralPath $commandKey)) {
+        $command = (Get-ItemProperty -LiteralPath $commandKey)."(default)"
+        if ($command -match "AgentToastNotify\\clifocus\.ps1") {
+            Remove-Item -LiteralPath $protocolKey -Recurse -Force
+        }
+    }
+}
+
 if (Test-Path -LiteralPath $hooksPath) {
     Copy-Item -Force $hooksPath $backupPath
     $hooks = Get-Content -LiteralPath $hooksPath -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -67,5 +86,7 @@ if (Test-Path -LiteralPath $InstallDir) {
         Write-Host "Kept shared files because another agent still references them."
     }
 }
+
+Unregister-CliFocusProtocolIfUnused -HooksPath $hooksPath -SettingsPath $settingsPath
 
 Write-Host "Uninstalled Codex Agent Toast hooks."
