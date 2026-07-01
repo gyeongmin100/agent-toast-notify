@@ -74,41 +74,8 @@ function Test-UsableWindowHandle {
     return [AgentToastHostWin]::IsWindow($ptr) -and [AgentToastHostWin]::IsWindowVisible($ptr)
 }
 
-function Get-LastFocusedWindowHandle {
-    if (Test-Path -LiteralPath $LastHostHwndPath) {
-        $stored = (Get-Content -LiteralPath $LastHostHwndPath -Raw -ErrorAction SilentlyContinue).Trim()
-        $storedHandle = 0L
-        if ([Int64]::TryParse($stored, [ref]$storedHandle) -and (Test-UsableWindowHandle -Handle $storedHandle)) {
-            return $storedHandle
-        }
-    }
-
-    $focusLog = Join-Path $env:TEMP "clifocus.log"
-    if (-not (Test-Path -LiteralPath $focusLog)) { return 0 }
-
-    $lines = Get-Content -LiteralPath $focusLog -Tail 80 -ErrorAction SilentlyContinue
-    for ($i = $lines.Count - 1; $i -ge 0; $i--) {
-        $line = [string]$lines[$i]
-        $candidate = 0L
-        if ($line -match "hwnd=([0-9]+)") {
-            $candidate = [Int64]$Matches[1]
-        } elseif ($line -match "clifocus://([0-9]+)") {
-            $candidate = [Int64]$Matches[1]
-        }
-
-        if ($candidate -gt 0 -and (Test-UsableWindowHandle -Handle $candidate)) {
-            return $candidate
-        }
-    }
-
-    return 0
-}
-
 $hostHwnd = Get-HostWindowHandle
-if ($hostHwnd -eq 0) {
-    $hostHwnd = Get-LastFocusedWindowHandle
-    Write-ToastLog "FALLBACK hostHwnd=[$hostHwnd]"
-}
+if ($hostHwnd -eq 0) { Write-ToastLog "NO_SOURCE hostHwnd=[0]" }
 
 Save-LastHostWindowHandle -Handle $hostHwnd
 $launchAttr = ""
