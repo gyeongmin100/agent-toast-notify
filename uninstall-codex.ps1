@@ -51,7 +51,9 @@ if (Test-Path -LiteralPath $hooksPath) {
     if ($hooks.PSObject.Properties["hooks"]) {
         Remove-AgentToastHookGroups -HooksContainer $hooks.hooks -EventName "PermissionRequest" -CommandPattern "codex-notify\.ps1.*permission-request"
         Remove-AgentToastHookGroups -HooksContainer $hooks.hooks -EventName "Stop" -CommandPattern "codex-notify\.ps1.*stop"
-        $hooks | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $hooksPath -Encoding UTF8
+        $json = $hooks | ConvertTo-Json -Depth 20
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText($hooksPath, $json, $utf8NoBom)
     }
 }
 

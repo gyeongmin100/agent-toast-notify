@@ -110,6 +110,8 @@ $stopGroup = [pscustomobject]@{
 Set-HookGroup -HooksContainer $settings.hooks -EventName "Notification" -NewGroup $permissionGroup -CommandPattern "claude-notify\.ps1.*permission-request"
 Set-HookGroup -HooksContainer $settings.hooks -EventName "Stop" -NewGroup $stopGroup -CommandPattern "claude-notify\.ps1.*stop"
 
-$settings | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
+$json = $settings | ConvertTo-Json -Depth 20
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($settingsPath, $json, $utf8NoBom)
 
 Write-Host "Installed. Restart Claude Code if hooks do not reload immediately."
