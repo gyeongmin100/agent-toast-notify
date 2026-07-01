@@ -7,6 +7,7 @@ param(
 $ErrorActionPreference = "SilentlyContinue"
 $NotifyLogPath = Join-Path $env:TEMP "agent-toast.log"
 $LastHostHwndPath = Join-Path $env:TEMP "agent-toast-last-host-hwnd.txt"
+$LegacyLastHostHwndPath = Join-Path $env:USERPROFILE ".codex\scripts\last-host-hwnd.txt"
 $IconPath = Join-Path $PSScriptRoot "assets\agent-toast.png"
 $HostProcessNames = @("WindowsTerminal", "wt", "cmd", "powershell", "pwsh", "ConEmu", "mintty", "Code", "Cursor")
 
@@ -106,11 +107,33 @@ function Test-HostWindowHandle {
 }
 
 function Get-LastFocusedWindowHandle {
-    if (Test-Path -LiteralPath $LastHostHwndPath) {
-        $stored = (Get-Content -LiteralPath $LastHostHwndPath -Raw -ErrorAction SilentlyContinue).Trim()
+    foreach ($path in @($LastHostHwndPath, $LegacyLastHostHwndPath)) {
+        if (-not (Test-Path -LiteralPath $path)) { continue }
+
+        $stored = (Get-Content -LiteralPath $path -Raw -ErrorAction SilentlyContinue).Trim()
         $storedHandle = 0L
         if ([Int64]::TryParse($stored, [ref]$storedHandle) -and (Test-HostWindowHandle -Handle $storedHandle)) {
+            Write-ToastLog "FALLBACK stored hostHwnd=[$storedHandle] path=[$path]"
             return $storedHandle
+        }
+    }
+
+    $focusLog = Join-Path $env:TEMP "clifocus.log"
+    if (-not (Test-Path -LiteralPath $focusLog)) { return 0 }
+
+    $lines = Get-Content -LiteralPath $focusLog -Tail 80 -ErrorAction SilentlyContinue
+    for ($i = $lines.Count - 1; $i -ge 0; $i--) {
+        $line = [string]$lines[$i]
+        $candidate = 0L
+        if ($line -match "hwnd=([0-9]+)") {
+            $candidate = [Int64]$Matches[1]
+        } elseif ($line -match "clifocus://([0-9]+)") {
+            $candidate = [Int64]$Matches[1]
+        }
+
+        if ($candidate -gt 0 -and (Test-HostWindowHandle -Handle $candidate)) {
+            Write-ToastLog "FALLBACK focusLog hostHwnd=[$candidate]"
+            return $candidate
         }
     }
 
