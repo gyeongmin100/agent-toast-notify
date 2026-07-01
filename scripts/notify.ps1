@@ -7,9 +7,7 @@ param(
 $ErrorActionPreference = "SilentlyContinue"
 $NotifyLogPath = Join-Path $env:TEMP "agent-toast.log"
 $LastHostHwndPath = Join-Path $env:TEMP "agent-toast-last-host-hwnd.txt"
-$LegacyLastHostHwndPath = Join-Path $env:USERPROFILE ".codex\scripts\last-host-hwnd.txt"
 $IconPath = Join-Path $PSScriptRoot "assets\agent-toast.png"
-$HostProcessNames = @("WindowsTerminal", "wt", "cmd", "powershell", "pwsh", "ConEmu", "mintty", "Code", "Cursor")
 
 function Write-ToastLog {
     param([string]$Line)
@@ -19,7 +17,7 @@ function Write-ToastLog {
 function Save-LastHostWindowHandle {
     param([Int64]$Handle)
 
-    if ($Handle -gt 0 -and (Test-HostWindowHandle -Handle $Handle)) {
+    if ($Handle -gt 0) {
         Set-Content -LiteralPath $LastHostHwndPath -Value ([string]$Handle) -Encoding ASCII
         Write-ToastLog "SAVE lastHostHwnd=[$Handle]"
     }
@@ -31,15 +29,6 @@ using System.Runtime.InteropServices;
 public class AgentToastFgWin {
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern int GetWindowThreadProcessId(IntPtr h, out int procId);
-}
-"@
-
-Add-Type @"
-using System;
-using System.Runtime.InteropServices;
-public class AgentToastHostWin {
-    [DllImport("user32.dll")] public static extern bool IsWindow(IntPtr h);
-    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
 }
 "@
 
@@ -64,6 +53,15 @@ if ($terminalHostProcesses -contains $proc.ProcessName) {
     Write-ToastLog "USE foreground terminal host ($($proc.ProcessName)) hostHwnd=[$foregroundHostHwnd]"
 }
 
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class AgentToastHostWin {
+    [DllImport("user32.dll")] public static extern bool IsWindow(IntPtr h);
+    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+}
+"@
+
 function Get-HostWindowHandle {
     $cur = $PID
     for ($i = 0; $i -lt 12; $i++) {
@@ -72,22 +70,11 @@ function Get-HostWindowHandle {
         $cur = [int]$p.ParentProcessId
         $hp = Get-Process -Id $cur -ErrorAction SilentlyContinue
         if (-not $hp) { break }
-        if ($HostProcessNames -notcontains $hp.ProcessName) { continue }
+        if ($hp.ProcessName -eq "explorer") { continue }
         $wh = [Int64]$hp.MainWindowHandle
-        if ($wh -ne 0 -and (Test-HostWindowHandle -Handle $wh)) { return $wh }
+        if ($wh -ne 0 -and [AgentToastHostWin]::IsWindowVisible([IntPtr]$wh)) { return $wh }
     }
     return 0
-}
-
-function Get-WindowProcessName {
-    param([Int64]$Handle)
-
-    if ($Handle -le 0) { return "" }
-    $windowProcessId = 0
-    [AgentToastFgWin]::GetWindowThreadProcessId([IntPtr]::new($Handle), [ref]$windowProcessId) | Out-Null
-    $windowProcess = Get-Process -Id $windowProcessId -ErrorAction SilentlyContinue
-    if (-not $windowProcess) { return "" }
-    return $windowProcess.ProcessName
 }
 
 function Test-UsableWindowHandle {
@@ -98,22 +85,11 @@ function Test-UsableWindowHandle {
     return [AgentToastHostWin]::IsWindow($ptr) -and [AgentToastHostWin]::IsWindowVisible($ptr)
 }
 
-function Test-HostWindowHandle {
-    param([Int64]$Handle)
-
-    if (-not (Test-UsableWindowHandle -Handle $Handle)) { return $false }
-    $processName = Get-WindowProcessName -Handle $Handle
-    return $HostProcessNames -contains $processName
-}
-
 function Get-LastFocusedWindowHandle {
-    foreach ($path in @($LastHostHwndPath, $LegacyLastHostHwndPath)) {
-        if (-not (Test-Path -LiteralPath $path)) { continue }
-
-        $stored = (Get-Content -LiteralPath $path -Raw -ErrorAction SilentlyContinue).Trim()
+    if (Test-Path -LiteralPath $LastHostHwndPath) {
+        $stored = (Get-Content -LiteralPath $LastHostHwndPath -Raw -ErrorAction SilentlyContinue).Trim()
         $storedHandle = 0L
-        if ([Int64]::TryParse($stored, [ref]$storedHandle) -and (Test-HostWindowHandle -Handle $storedHandle)) {
-            Write-ToastLog "FALLBACK stored hostHwnd=[$storedHandle] path=[$path]"
+        if ([Int64]::TryParse($stored, [ref]$storedHandle) -and (Test-UsableWindowHandle -Handle $storedHandle)) {
             return $storedHandle
         }
     }
@@ -131,8 +107,7 @@ function Get-LastFocusedWindowHandle {
             $candidate = [Int64]$Matches[1]
         }
 
-        if ($candidate -gt 0 -and (Test-HostWindowHandle -Handle $candidate)) {
-            Write-ToastLog "FALLBACK focusLog hostHwnd=[$candidate]"
+        if ($candidate -gt 0 -and (Test-UsableWindowHandle -Handle $candidate)) {
             return $candidate
         }
     }
