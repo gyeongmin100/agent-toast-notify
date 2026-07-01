@@ -45,6 +45,7 @@ using System.Runtime.InteropServices;
 public class AgentToastHostWin {
     [DllImport("user32.dll")] public static extern bool IsWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+    [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();
 }
 "@
 
@@ -75,6 +76,13 @@ function Test-UsableWindowHandle {
 }
 
 $hostHwnd = Get-HostWindowHandle
+if ($hostHwnd -eq 0) {
+    $consoleHwnd = [Int64][AgentToastHostWin]::GetConsoleWindow()
+    if (Test-UsableWindowHandle -Handle $consoleHwnd) {
+        $hostHwnd = $consoleHwnd
+        Write-ToastLog "FALLBACK consoleHwnd=[$hostHwnd]"
+    }
+}
 if ($hostHwnd -eq 0) { Write-ToastLog "NO_SOURCE hostHwnd=[0]" }
 
 Save-LastHostWindowHandle -Handle $hostHwnd
