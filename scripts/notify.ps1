@@ -45,6 +45,14 @@ if ($proc.ProcessName -eq "Code" -or $proc.ProcessName -eq "Cursor") {
     exit 0
 }
 
+$foregroundHostHwnd = 0
+$terminalHostProcesses = @("WindowsTerminal", "wt", "cmd", "powershell", "pwsh", "ConEmu", "mintty")
+if ($terminalHostProcesses -contains $proc.ProcessName) {
+    $foregroundHostHwnd = [Int64]$hwnd
+    Save-LastHostWindowHandle -Handle $foregroundHostHwnd
+    Write-ToastLog "USE foreground terminal host ($($proc.ProcessName)) hostHwnd=[$foregroundHostHwnd]"
+}
+
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
@@ -107,7 +115,10 @@ function Get-LastFocusedWindowHandle {
     return 0
 }
 
-$hostHwnd = Get-HostWindowHandle
+$hostHwnd = $foregroundHostHwnd
+if ($hostHwnd -eq 0) {
+    $hostHwnd = Get-HostWindowHandle
+}
 if ($hostHwnd -eq 0) {
     $hostHwnd = Get-LastFocusedWindowHandle
     Write-ToastLog "FALLBACK hostHwnd=[$hostHwnd]"

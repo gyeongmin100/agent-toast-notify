@@ -60,7 +60,7 @@ function Register-CliFocusProtocol {
     $clifocusScript = Join-Path $InstallDir "clifocus.ps1"
     $protocolKey = "HKCU:\Software\Classes\clifocus"
     $commandKey = Join-Path $protocolKey "shell\open\command"
-    $command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$clifocusScript`" `"%1`""
+    $command = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$clifocusScript`" `"%1`""
 
     $protocolRegistryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Software\Classes\clifocus")
     $commandRegistryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Software\Classes\clifocus\shell\open\command")
