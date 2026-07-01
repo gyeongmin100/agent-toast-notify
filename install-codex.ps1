@@ -56,7 +56,7 @@ Install-AgentToastFiles -InstallDir $InstallDir -RepositoryRawBase $RepositoryRa
 
 if (Test-Path -LiteralPath $hooksPath) {
     Copy-Item -Force $hooksPath $backupPath
-    $hooks = Get-Content -LiteralPath $hooksPath -Raw | ConvertFrom-Json
+    $hooks = Get-Content -LiteralPath $hooksPath -Raw -Encoding UTF8 | ConvertFrom-Json
 } else {
     New-Item -ItemType Directory -Force -Path $CodexHome | Out-Null
     $hooks = [pscustomobject]@{ hooks = [pscustomobject]@{} }

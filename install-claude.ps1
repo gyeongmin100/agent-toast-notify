@@ -56,7 +56,7 @@ Install-AgentToastFiles -InstallDir $InstallDir -RepositoryRawBase $RepositoryRa
 
 if (Test-Path -LiteralPath $settingsPath) {
     Copy-Item -Force $settingsPath $backupPath
-    $settings = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+    $settings = Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 } else {
     New-Item -ItemType Directory -Force -Path $ClaudeHome | Out-Null
     $settings = [pscustomobject]@{}

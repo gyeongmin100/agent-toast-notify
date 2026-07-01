@@ -40,13 +40,13 @@ function Test-AgentToastReference {
     param([string]$Path)
 
     if (-not (Test-Path -LiteralPath $Path)) { return $false }
-    $content = Get-Content -LiteralPath $Path -Raw
+    $content = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
     return $content -match "(codex-notify|claude-notify)\.ps1"
 }
 
 if (Test-Path -LiteralPath $hooksPath) {
     Copy-Item -Force $hooksPath $backupPath
-    $hooks = Get-Content -LiteralPath $hooksPath -Raw | ConvertFrom-Json
+    $hooks = Get-Content -LiteralPath $hooksPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
     if ($hooks.PSObject.Properties["hooks"]) {
         Remove-AgentToastHookGroups -HooksContainer $hooks.hooks -EventName "PermissionRequest" -CommandPattern "codex-notify\.ps1.*permission-request"
