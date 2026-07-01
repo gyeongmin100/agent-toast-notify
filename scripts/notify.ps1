@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "SilentlyContinue"
 $NotifyLogPath = Join-Path $env:TEMP "agent-toast.log"
 $LastHostHwndPath = Join-Path $env:TEMP "agent-toast-last-host-hwnd.txt"
-$IconPath = Join-Path $PSScriptRoot "assets\agent-toast.png"
+$IconPath = Join-Path $PSScriptRoot "assets\agent-toast-48.png"
 
 function Write-ToastLog {
     param([string]$Line)
@@ -92,11 +92,11 @@ if ($hostHwnd -ne 0) {
 }
 Write-ToastLog "TOAST hostHwnd=[$hostHwnd] launchAttr=[$launchAttr]"
 
-$logoXml = ""
+$amRegPath = "HKCU:\Software\Classes\AppUserModelId\$AppId"
+New-Item -Path $amRegPath -Force | Out-Null
+Set-ItemProperty -LiteralPath $amRegPath -Name "DisplayName" -Value $Title -Force
 if (Test-Path -LiteralPath $IconPath) {
-    $iconHash = (Get-FileHash -LiteralPath $IconPath -Algorithm SHA256).Hash.Substring(0, 8)
-    $iconUri = ([System.Uri]$IconPath).AbsoluteUri + "?v=$iconHash"
-    $logoXml = "      <image placement=`"appLogoOverride`" src=`"$iconUri`" />"
+    Set-ItemProperty -LiteralPath $amRegPath -Name "IconUri" -Value $IconPath -Force
 }
 
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType=WindowsRuntime] | Out-Null
@@ -106,8 +106,7 @@ if (Test-Path -LiteralPath $IconPath) {
 $toastXml = @"
 <toast$launchAttr>
   <visual>
-    <binding template="ToastText02">
-$logoXml
+    <binding template="ToastGeneric">
       <text id="1">$Title</text>
       <text id="2">$Message</text>
     </binding>

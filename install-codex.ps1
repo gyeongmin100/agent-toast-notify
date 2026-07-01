@@ -36,7 +36,7 @@ function Install-AgentToastFiles {
     if (Test-Path -LiteralPath (Join-Path $localScriptsDir "notify.ps1")) {
         Copy-Item -Force -Path (Join-Path $localScriptsDir "*.ps1") -Destination $InstallDir
         Copy-Item -Force -Path (Join-Path $localScriptsDir "run-hidden.vbs") -Destination $InstallDir
-        Copy-Item -Force -Path (Join-Path $localAssetsDir "agent-toast.png") -Destination $assetsDir
+        Copy-Item -Force -Path (Join-Path $localAssetsDir "agent-toast-48.png") -Destination $assetsDir
         return
     }
 
@@ -46,7 +46,7 @@ function Install-AgentToastFiles {
         @{ Url = "$RepositoryRawBase/scripts/codex-notify.ps1"; Path = (Join-Path $InstallDir "codex-notify.ps1") },
         @{ Url = "$RepositoryRawBase/scripts/claude-notify.ps1"; Path = (Join-Path $InstallDir "claude-notify.ps1") },
         @{ Url = "$RepositoryRawBase/scripts/run-hidden.vbs"; Path = (Join-Path $InstallDir "run-hidden.vbs") },
-        @{ Url = "$RepositoryRawBase/assets/agent-toast.png"; Path = (Join-Path $assetsDir "agent-toast.png") }
+        @{ Url = "$RepositoryRawBase/assets/agent-toast-48.png"; Path = (Join-Path $assetsDir "agent-toast-48.png") }
     )
 
     foreach ($file in $files) {

@@ -49,7 +49,7 @@ Codex는 `~/.codex/hooks.json`, Claude Code는 `~/.claude/settings.json`에 hook
 - `codex-notify.ps1`, `claude-notify.ps1`: 각 CLI hook의 진입점
 - `notify.ps1`: 토스트 알림 표시
 - `clifocus.ps1`: 알림 클릭 시 원래 창으로 이동
-- `agent-toast.png`: 알림 아이콘
+- `agent-toast-48.png`: 알림 아이콘
 
 ## 제거
 

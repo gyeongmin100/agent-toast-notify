@@ -15,7 +15,7 @@ function Send-AgentToast {
     param([string]$Message)
 
     if (Test-Path -LiteralPath $notifyScript) {
-        & $notifyScript -Title "Codex" -Message $Message -AppId "Codex.GPT"
+        & $notifyScript -Title "Codex" -Message $Message -AppId "AgentToastNotify.Codex48"
     }
 }
 

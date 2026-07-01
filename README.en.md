@@ -50,7 +50,7 @@ Main files:
 - `codex-notify.ps1`, `claude-notify.ps1`: entry points for each CLI hook
 - `notify.ps1`: shows the toast notification
 - `clifocus.ps1`: returns focus to the original window when you click the toast
-- `agent-toast.png`: notification icon
+- `agent-toast-48.png`: notification icon
 
 ## Uninstall
 

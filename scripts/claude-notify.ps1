@@ -14,7 +14,7 @@ function Send-AgentToast {
     param([string]$Message)
 
     if (Test-Path -LiteralPath $notifyScript) {
-        & $notifyScript -Title "Claude Code" -Message $Message -AppId "ClaudeCode.Notify"
+        & $notifyScript -Title "Claude Code" -Message $Message -AppId "AgentToastNotify.Claude48"
     }
 }
 
