@@ -24,16 +24,17 @@ or Claude Code finishes a task or asks for approval.
 Codex CLI:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install-codex.ps1
+irm https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main/install-codex.ps1 | iex
 ```
 
 Claude Code CLI:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install-claude.ps1
+irm https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main/install-claude.ps1 | iex
 ```
 
-To use both, run both installers.
+Copy and run the command you need in PowerShell.  
+To use both, run both install commands.
 
 ## How it works
 
@@ -54,8 +55,8 @@ Main files:
 ## Uninstall
 
 ```powershell
-.\uninstall-codex.ps1
-.\uninstall-claude.ps1
+irm https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main/uninstall-codex.ps1 | iex
+irm https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main/uninstall-claude.ps1 | iex
 ```
 
 The shared script folder is removed only when neither Codex nor Claude Code still references it.

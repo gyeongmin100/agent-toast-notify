@@ -1,6 +1,7 @@
 param(
     [string]$ClaudeHome = "$env:USERPROFILE\.claude",
     [string]$InstallDir = (Join-Path $env:LOCALAPPDATA "AgentToastNotify"),
+    [string]$RepositoryRawBase = "https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main",
     [switch]$WhatIf
 )
 
@@ -14,15 +15,44 @@ Write-Host "ClaudeHome: $ClaudeHome"
 Write-Host "InstallDir: $InstallDir"
 
 if ($WhatIf) {
-    Write-Host "WhatIf: would copy scripts to $InstallDir and merge settings.json"
+    Write-Host "WhatIf: would install scripts to $InstallDir and merge settings.json"
     exit 0
 }
 
-New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-Copy-Item -Force -Path (Join-Path $PSScriptRoot "scripts\*.ps1") -Destination $InstallDir
-if (Test-Path -LiteralPath (Join-Path $PSScriptRoot "assets")) {
-    Copy-Item -Recurse -Force -Path (Join-Path $PSScriptRoot "assets") -Destination $InstallDir
+function Install-AgentToastFiles {
+    param(
+        [string]$InstallDir,
+        [string]$RepositoryRawBase
+    )
+
+    $scriptRoot = if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) { (Get-Location).Path } else { $PSScriptRoot }
+    $localScriptsDir = Join-Path $scriptRoot "scripts"
+    $localAssetsDir = Join-Path $scriptRoot "assets"
+    $assetsDir = Join-Path $InstallDir "assets"
+
+    New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+    New-Item -ItemType Directory -Force -Path $assetsDir | Out-Null
+
+    if (Test-Path -LiteralPath (Join-Path $localScriptsDir "notify.ps1")) {
+        Copy-Item -Force -Path (Join-Path $localScriptsDir "*.ps1") -Destination $InstallDir
+        Copy-Item -Force -Path (Join-Path $localAssetsDir "agent-toast.png") -Destination $assetsDir
+        return
+    }
+
+    $files = @(
+        @{ Url = "$RepositoryRawBase/scripts/notify.ps1"; Path = (Join-Path $InstallDir "notify.ps1") },
+        @{ Url = "$RepositoryRawBase/scripts/clifocus.ps1"; Path = (Join-Path $InstallDir "clifocus.ps1") },
+        @{ Url = "$RepositoryRawBase/scripts/codex-notify.ps1"; Path = (Join-Path $InstallDir "codex-notify.ps1") },
+        @{ Url = "$RepositoryRawBase/scripts/claude-notify.ps1"; Path = (Join-Path $InstallDir "claude-notify.ps1") },
+        @{ Url = "$RepositoryRawBase/assets/agent-toast.png"; Path = (Join-Path $assetsDir "agent-toast.png") }
+    )
+
+    foreach ($file in $files) {
+        Invoke-WebRequest -Uri $file.Url -OutFile $file.Path -UseBasicParsing
+    }
 }
+
+Install-AgentToastFiles -InstallDir $InstallDir -RepositoryRawBase $RepositoryRawBase
 
 if (Test-Path -LiteralPath $settingsPath) {
     Copy-Item -Force $settingsPath $backupPath
