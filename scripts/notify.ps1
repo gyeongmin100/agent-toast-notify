@@ -39,20 +39,6 @@ $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
 
 Write-ToastLog "START title=[$Title] message=[$Message] foregroundProc=[$($proc.ProcessName)] foregroundHwnd=[$hwnd]"
 
-if ($proc.ProcessName -eq "Code" -or $proc.ProcessName -eq "Cursor") {
-    Save-LastHostWindowHandle -Handle ([Int64]$hwnd)
-    Write-ToastLog "EXIT foreground is host ($($proc.ProcessName))"
-    exit 0
-}
-
-$foregroundHostHwnd = 0
-$terminalHostProcesses = @("WindowsTerminal", "wt", "cmd", "powershell", "pwsh", "ConEmu", "mintty")
-if ($terminalHostProcesses -contains $proc.ProcessName) {
-    $foregroundHostHwnd = [Int64]$hwnd
-    Save-LastHostWindowHandle -Handle $foregroundHostHwnd
-    Write-ToastLog "USE foreground terminal host ($($proc.ProcessName)) hostHwnd=[$foregroundHostHwnd]"
-}
-
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
@@ -72,7 +58,10 @@ function Get-HostWindowHandle {
         if (-not $hp) { break }
         if ($hp.ProcessName -eq "explorer") { continue }
         $wh = [Int64]$hp.MainWindowHandle
-        if ($wh -ne 0 -and [AgentToastHostWin]::IsWindowVisible([IntPtr]$wh)) { return $wh }
+        if ($wh -ne 0 -and [AgentToastHostWin]::IsWindowVisible([IntPtr]$wh)) {
+            Write-ToastLog "SOURCE parentProc=[$($hp.ProcessName)] parentPid=[$cur] hostHwnd=[$wh]"
+            return $wh
+        }
     }
     return 0
 }
@@ -115,10 +104,7 @@ function Get-LastFocusedWindowHandle {
     return 0
 }
 
-$hostHwnd = $foregroundHostHwnd
-if ($hostHwnd -eq 0) {
-    $hostHwnd = Get-HostWindowHandle
-}
+$hostHwnd = Get-HostWindowHandle
 if ($hostHwnd -eq 0) {
     $hostHwnd = Get-LastFocusedWindowHandle
     Write-ToastLog "FALLBACK hostHwnd=[$hostHwnd]"
