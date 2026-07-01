@@ -13,6 +13,7 @@ or Claude Code finishes a task or asks for approval.
 - Shows `Approval required` when approval is needed.
 - Shows `Task finished` when the task is done and the agent stops.
 - Returns you to the original working window when you click the notification.
+- Skips the notification if you're already looking at that window.
 
 ## Supported agents
 

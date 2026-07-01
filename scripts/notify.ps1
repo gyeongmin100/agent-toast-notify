@@ -85,6 +85,11 @@ if ($hostHwnd -eq 0) {
 }
 if ($hostHwnd -eq 0) { Write-ToastLog "NO_SOURCE hostHwnd=[0]" }
 
+if ($hostHwnd -ne 0 -and $hostHwnd -eq [Int64]$hwnd) {
+    Write-ToastLog "SKIP already focused hostHwnd=[$hostHwnd]"
+    exit 0
+}
+
 Save-LastHostWindowHandle -Handle $hostHwnd
 $launchAttr = ""
 if ($hostHwnd -ne 0) {
