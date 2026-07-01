@@ -35,6 +35,7 @@ function Install-AgentToastFiles {
 
     if (Test-Path -LiteralPath (Join-Path $localScriptsDir "notify.ps1")) {
         Copy-Item -Force -Path (Join-Path $localScriptsDir "*.ps1") -Destination $InstallDir
+        Copy-Item -Force -Path (Join-Path $localScriptsDir "run-hidden.vbs") -Destination $InstallDir
         Copy-Item -Force -Path (Join-Path $localAssetsDir "agent-toast.png") -Destination $assetsDir
         return
     }
@@ -44,6 +45,7 @@ function Install-AgentToastFiles {
         @{ Url = "$RepositoryRawBase/scripts/clifocus.ps1"; Path = (Join-Path $InstallDir "clifocus.ps1") },
         @{ Url = "$RepositoryRawBase/scripts/codex-notify.ps1"; Path = (Join-Path $InstallDir "codex-notify.ps1") },
         @{ Url = "$RepositoryRawBase/scripts/claude-notify.ps1"; Path = (Join-Path $InstallDir "claude-notify.ps1") },
+        @{ Url = "$RepositoryRawBase/scripts/run-hidden.vbs"; Path = (Join-Path $InstallDir "run-hidden.vbs") },
         @{ Url = "$RepositoryRawBase/assets/agent-toast.png"; Path = (Join-Path $assetsDir "agent-toast.png") }
     )
 
@@ -58,9 +60,10 @@ function Register-CliFocusProtocol {
     param([string]$InstallDir)
 
     $clifocusScript = Join-Path $InstallDir "clifocus.ps1"
+    $hiddenRunner = Join-Path $InstallDir "run-hidden.vbs"
     $protocolKey = "HKCU:\Software\Classes\clifocus"
     $commandKey = Join-Path $protocolKey "shell\open\command"
-    $command = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$clifocusScript`" `"%1`""
+    $command = "wscript.exe //B //Nologo `"$hiddenRunner`" -File `"$clifocusScript`" `"%1`""
 
     $protocolRegistryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Software\Classes\clifocus")
     $commandRegistryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Software\Classes\clifocus\shell\open\command")
