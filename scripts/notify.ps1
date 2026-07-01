@@ -94,7 +94,8 @@ Write-ToastLog "TOAST hostHwnd=[$hostHwnd] launchAttr=[$launchAttr]"
 
 $logoXml = ""
 if (Test-Path -LiteralPath $IconPath) {
-    $iconUri = ([System.Uri]$IconPath).AbsoluteUri
+    $iconHash = (Get-FileHash -LiteralPath $IconPath -Algorithm SHA256).Hash.Substring(0, 8)
+    $iconUri = ([System.Uri]$IconPath).AbsoluteUri + "?v=$iconHash"
     $logoXml = "      <image placement=`"appLogoOverride`" src=`"$iconUri`" />"
 }
 
