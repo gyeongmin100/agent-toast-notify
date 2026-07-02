@@ -50,6 +50,7 @@ Codex는 `~/.codex/hooks.json`, Claude Code는 `~/.claude/settings.json`에 hook
 - `codex-notify.ps1`, `claude-notify.ps1`: 각 CLI hook의 진입점
 - `notify.ps1`: 토스트 알림 표시
 - `clifocus.ps1`: 알림 클릭 시 원래 창으로 이동
+- `run-hidden.vbs`: clifocus 실행 시 콘솔 창이 뜨지 않도록 PowerShell을 숨겨서 실행
 - `agent-toast-48.png`: 알림 아이콘
 
 ## 제거
@@ -59,4 +60,4 @@ irm https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main/unins
 irm https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main/uninstall-claude.ps1 | iex
 ```
 
-공용 스크립트 폴더는 Codex와 Claude Code 둘 다 더 이상 참조하지 않을 때만 제거됩니다.
+`%LOCALAPPDATA%\AgentToastNotify` 폴더(Codex와 Claude Code가 함께 쓰는 스크립트 폴더)는 둘 중 하나만 제거해도 바로 지워지지 않고, 나머지 하나까지 제거되어야 삭제됩니다.

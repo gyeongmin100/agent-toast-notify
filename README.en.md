@@ -51,6 +51,7 @@ Main files:
 - `codex-notify.ps1`, `claude-notify.ps1`: entry points for each CLI hook
 - `notify.ps1`: shows the toast notification
 - `clifocus.ps1`: returns focus to the original window when you click the toast
+- `run-hidden.vbs`: runs PowerShell hidden (no console window) when clifocus fires
 - `agent-toast-48.png`: notification icon
 
 ## Uninstall
@@ -60,4 +61,4 @@ irm https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main/unins
 irm https://raw.githubusercontent.com/gyeongmin100/agent-toast-notify/main/uninstall-claude.ps1 | iex
 ```
 
-The shared script folder is removed only when neither Codex nor Claude Code still references it.
+The `%LOCALAPPDATA%\AgentToastNotify` folder (the scripts folder shared by Codex and Claude Code) isn't deleted after removing just one of them — it's only removed once both have been uninstalled.
