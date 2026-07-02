@@ -89,4 +89,43 @@ if (Test-Path -LiteralPath $InstallDir) {
 
 Unregister-CliFocusProtocolIfUnused -HooksPath $hooksPath -SettingsPath $settingsPath
 
+function Remove-AgentToastAppRegistrations {
+    param([string]$AppIdPrefix)
+
+    $roots = @(
+        "HKCU:\Software\Classes\AppUserModelId",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\PushNotifications\Backup"
+    )
+    foreach ($root in $roots) {
+        Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue |
+            Where-Object { $_.PSChildName -like "$AppIdPrefix*" } |
+            ForEach-Object { Remove-Item -LiteralPath $_.PSPath -Recurse -Force -ErrorAction SilentlyContinue }
+    }
+}
+
+function Remove-AgentToastBackups {
+    param([string]$BasePath)
+    Remove-Item -Path "$BasePath.bak-agent-toast*" -Force -ErrorAction SilentlyContinue
+}
+
+function Remove-AgentToastSharedTempIfUnused {
+    param(
+        [string]$HooksPath,
+        [string]$SettingsPath
+    )
+
+    $codexStillUsesAgentToast = Test-AgentToastReference -Path $HooksPath
+    $claudeStillUsesAgentToast = Test-AgentToastReference -Path $SettingsPath
+
+    if (-not $codexStillUsesAgentToast -and -not $claudeStillUsesAgentToast) {
+        Remove-Item -LiteralPath (Join-Path $env:TEMP "agent-toast.log") -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath (Join-Path $env:TEMP "agent-toast-last-host-hwnd.txt") -Force -ErrorAction SilentlyContinue
+    }
+}
+
+Remove-AgentToastAppRegistrations -AppIdPrefix "AgentToastNotify.Claude"
+Remove-AgentToastBackups -BasePath $settingsPath
+Remove-AgentToastSharedTempIfUnused -HooksPath $hooksPath -SettingsPath $settingsPath
+
 Write-Host "Uninstalled Claude Code Agent Toast hooks."
