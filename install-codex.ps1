@@ -9,6 +9,8 @@ $ErrorActionPreference = "Stop"
 
 $hooksPath = Join-Path $CodexHome "hooks.json"
 $backupPath = "$hooksPath.bak-agent-toast"
+$configPath = Join-Path $CodexHome "config.toml"
+$configBackupPath = "$configPath.bak-agent-toast"
 
 Write-Host "Installing Agent Toast Notify for Codex"
 Write-Host "CodexHome: $CodexHome"
@@ -78,6 +80,42 @@ function Register-CliFocusProtocol {
 }
 
 Register-CliFocusProtocol -InstallDir $InstallDir
+
+function Disable-CodexNotifySetting {
+    param(
+        [string]$ConfigPath,
+        [string]$BackupPath
+    )
+
+    if (-not (Test-Path -LiteralPath $ConfigPath)) {
+        return
+    }
+
+    $lines = Get-Content -LiteralPath $ConfigPath -Encoding UTF8
+    $inTopLevel = $true
+    $changed = $false
+    $keptLines = foreach ($line in $lines) {
+        if ($line -match '^\s*\[') {
+            $inTopLevel = $false
+        }
+
+        if ($inTopLevel -and $line -match '^\s*notify\s*=') {
+            $changed = $true
+            continue
+        }
+
+        $line
+    }
+
+    if ($changed) {
+        Copy-Item -Force -LiteralPath $ConfigPath -Destination $BackupPath
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllLines($ConfigPath, [string[]]$keptLines, $utf8NoBom)
+        Write-Host "Removed existing Codex notify setting from config.toml to avoid duplicate task-finished notifications."
+    }
+}
+
+Disable-CodexNotifySetting -ConfigPath $configPath -BackupPath $configBackupPath
 
 if (Test-Path -LiteralPath $hooksPath) {
     Copy-Item -Force $hooksPath $backupPath
